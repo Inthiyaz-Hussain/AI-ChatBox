@@ -1,13 +1,20 @@
 import { Link } from "react-router-dom";
 import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
 
-type LoginFormData = {
-  email: string;
-  password: string;
-};
+import { loginSchema, type LoginFormData } from "../../schemas/loginSchema";
+
+import Input from "../../components/ui/Input";
+import Button from "../../components/ui/Button";
 
 export default function LoginForm() {
-  const { register, handleSubmit } = useForm<LoginFormData>();
+  const {
+    register,
+    handleSubmit,
+    formState: { errors },
+  } = useForm<LoginFormData>({
+    resolver: zodResolver(loginSchema),
+  });
 
   const onSubmit = (data: LoginFormData) => {
     console.log(data);
@@ -18,31 +25,30 @@ export default function LoginForm() {
       <div>
         <label className="mb-2 block font-medium">Email</label>
 
-        <input
+        <Input
           type="email"
           placeholder="Enter your email"
           {...register("email")}
-          className="w-full rounded-lg border px-4 py-3 outline-none focus:border-blue-500"
         />
+        {errors.email && (
+          <p className="mt-1 text-sm text-red-500">{errors.email.message}</p>
+        )}
       </div>
 
       <div>
         <label className="mb-2 block font-medium">Password</label>
 
-        <input
+        <Input
           type="password"
           placeholder="Enter your password"
           {...register("password")}
-          className="w-full rounded-lg border px-4 py-3 outline-none focus:border-blue-500"
         />
+        {errors.password && (
+          <p className="mt-1 text-sm text-red-500">{errors.password.message}</p>
+        )}
       </div>
 
-      <button
-        type="submit"
-        className="w-full rounded-lg bg-blue-600 py-3 font-semibold text-white hover:bg-blue-700"
-      >
-        Login
-      </button>
+      <Button type="submit">Login</Button>
 
       <p className="text-center text-sm">
         Don't have an account?{" "}
