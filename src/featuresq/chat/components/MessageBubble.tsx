@@ -1,3 +1,4 @@
+import MarkdownRenderer from "./Markdown/MarkdownRenderer";
 type MessageBubbleProps = {
   role: "user" | "assistant";
   content: string;
@@ -15,7 +16,7 @@ export default function MessageBubble({ role, content }: MessageBubbleProps) {
             : "border border-gray-200 bg-white text-gray-900"
         }`}
       >
-        {content}
+        <MarkdownRenderer content={content} />
       </div>
     </div>
   );
