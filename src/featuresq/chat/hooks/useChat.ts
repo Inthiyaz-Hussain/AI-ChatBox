@@ -77,6 +77,7 @@ export default function useChat() {
     () => loadActiveChatId() ?? initialChats[0].id,
   );
   const [isTyping, setIsTyping] = useState<boolean>(false);
+  const [isLoading, setIsLoading] = useState(false);
   const [searchQuery, setSearchQuery] = useState<string>("");
 
   // Effects
@@ -110,59 +111,136 @@ export default function useChat() {
     },
     [activeChatId],
   );
-  const handleSendMessage = (message: string): void => {
+
+  const handleSendMessage = async (message: string): Promise<void> => {
+    if (isLoading || !message.trim()) {
+      return;
+    }
+
     const userMessage: Message = {
       id: crypto.randomUUID(),
       role: "user",
-      content: message,
+      content: message.trim(),
     };
 
     addMessageToActiveChat(userMessage);
 
     setIsTyping(true);
+    setIsLoading(true);
 
-    setTimeout(() => {
-      const aiMessage: Message = {
-        id: crypto.randomUUID(),
-        role: "assistant",
-        content: `# Markdown Demo
+    const assistantId = crypto.randomUUID();
 
-This is **bold**
+    addMessageToActiveChat({
+      id: assistantId,
+      role: "assistant",
+      content: "",
+    });
 
-This is *italic*
+    let streamedText = "";
 
-## React Example
+    try {
+      for await (const chunk of getGeminiResponse(
+        activeChatId,
+        message.trim(),
+      )) {
+        streamedText += chunk;
 
-\`\`\`tsx
-function App() {
-  return <h1>Hello World</h1>;
-}
-\`\`\`
+        setChats((prevChats) =>
+          prevChats.map((chat) => {
+            if (chat.id !== activeChatId) {
+              return chat;
+            }
 
-## Python Example
+            return {
+              ...chat,
+              messages: chat.messages.map((msg) =>
+                msg.id === assistantId
+                  ? {
+                      ...msg,
+                      content: streamedText,
+                    }
+                  : msg,
+              ),
+            };
+          }),
+        );
+      }
 
-\`\`\`python
-def greet():
-    print("Hello")
-\`\`\`
-`,
-      };
+      if (!streamedText.trim()) {
+        throw new Error("AI returned an empty response.");
+      }
+    } catch (error: unknown) {
+      const errorMessage =
+        error instanceof Error
+          ? error.message
+          : "Something went wrong. Please try again.";
 
-      addMessageToActiveChat(aiMessage);
+      setChats((prevChats) =>
+        prevChats.map((chat) => {
+          if (chat.id !== activeChatId) {
+            return chat;
+          }
 
+          return {
+            ...chat,
+            messages: chat.messages.map((msg) =>
+              msg.id === assistantId
+                ? {
+                    ...msg,
+                    content: `❌ ${errorMessage}`,
+                  }
+                : msg,
+            ),
+          };
+        }),
+      );
+    } finally {
       setIsTyping(false);
-    }, 1000);
+      setIsLoading(false);
+    }
   };
-  const handleRegenerateMessage = (): void => {
+  //     setTimeout(() => {
+  //       const aiMessage: Message = {
+  //         id: crypto.randomUUID(),
+  //         role: "assistant",
+  //         content: `# Markdown Demo
+
+  // This is **bold**
+
+  // This is *italic*
+
+  // ## React Example
+
+  // \`\`\`tsx
+  // function App() {
+  //   return <h1>Hello World</h1>;
+  // }
+  // \`\`\`
+
+  // ## Python Example
+
+  // \`\`\`python
+  // def greet():
+  //     print("Hello")
+  // \`\`\`
+  // `,
+  //       };
+
+  //       addMessageToActiveChat(aiMessage);
+
+  //       setIsTyping(false);
+  //     }, 1000);
+
+  const handleRegenerateMessage = async (): Promise<void> => {
+    if (isLoading) return;
+
     const activeChatMessages = activeChat?.messages ?? [];
 
     const lastUserMessage = [...activeChatMessages]
       .reverse()
       .find((message) => message.role === "user");
 
-    if (!lastUserMessage) {
-      return;
-    }
+    if (!lastUserMessage) return;
 
     const messagesWithoutLastAssistant = [...activeChatMessages];
 
@@ -171,33 +249,87 @@ def greet():
     }
 
     setChats((prevChats) =>
-      prevChats.map((chat) => {
-        if (chat.id !== activeChatId) {
-          return chat;
-        }
-
-        return {
-          ...chat,
-          messages: messagesWithoutLastAssistant,
-        };
-      }),
+      prevChats.map((chat) =>
+        chat.id === activeChatId
+          ? {
+              ...chat,
+              messages: messagesWithoutLastAssistant,
+            }
+          : chat,
+      ),
     );
 
     setIsTyping(true);
+    setIsLoading(true);
 
-    setTimeout(() => {
-      const regeneratedMessage: Message = {
-        id: crypto.randomUUID(),
-        role: "assistant",
-        content: `Regenerated response for:
+    const assistantId = crypto.randomUUID();
 
-"${lastUserMessage.content}"`,
-      };
+    addMessageToActiveChat({
+      id: assistantId,
+      role: "assistant",
+      content: "",
+    });
 
-      addMessageToActiveChat(regeneratedMessage);
+    let streamedText = "";
 
+    try {
+      for await (const chunk of getGeminiResponse(
+        activeChatId,
+        lastUserMessage.content,
+      )) {
+        streamedText += chunk;
+
+        setChats((prevChats) =>
+          prevChats.map((chat) => {
+            if (chat.id !== activeChatId) {
+              return chat;
+            }
+
+            return {
+              ...chat,
+              messages: chat.messages.map((msg) =>
+                msg.id === assistantId
+                  ? {
+                      ...msg,
+                      content: streamedText,
+                    }
+                  : msg,
+              ),
+            };
+          }),
+        );
+      }
+
+      if (!streamedText.trim()) {
+        throw new Error("AI returned an empty response.");
+      }
+    } catch (error: unknown) {
+      const errorMessage =
+        error instanceof Error ? error.message : "Something went wrong.";
+
+      setChats((prevChats) =>
+        prevChats.map((chat) => {
+          if (chat.id !== activeChatId) {
+            return chat;
+          }
+
+          return {
+            ...chat,
+            messages: chat.messages.map((msg) =>
+              msg.id === assistantId
+                ? {
+                    ...msg,
+                    content: `❌ ${errorMessage}`,
+                  }
+                : msg,
+            ),
+          };
+        }),
+      );
+    } finally {
       setIsTyping(false);
-    }, 1000);
+      setIsLoading(false);
+    }
   };
 
   const handleNewChat = (): void => {
@@ -208,6 +340,7 @@ def greet():
     };
 
     setChats((prevChats) => [...prevChats, newChat]);
+    clearGeminiChatHistory(newChat.id);
     setActiveChatId(newChat.id);
   };
 
@@ -221,7 +354,7 @@ def greet():
     }
 
     const updatedChats = chats.filter((chat) => chat.id !== chatId);
-
+    clearGeminiChatHistory(chatId);
     setChats(updatedChats);
 
     if (activeChatId === chatId) {
@@ -249,6 +382,7 @@ def greet():
     activeChat,
     activeChatId,
     isTyping,
+    isLoading,
     searchQuery,
     handleSendMessage,
     handleRegenerateMessage,
