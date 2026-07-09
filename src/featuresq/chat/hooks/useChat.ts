@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { useChatStore } from "../store/chatStore";
 
 import { dummyChats } from "../data/dummyChats";
 
@@ -67,25 +68,76 @@ export default function useChat() {
       const aiMessage: Message = {
         id: crypto.randomUUID(),
         role: "assistant",
-        content: `# Hello
+        content: `# Markdown Demo
 
 This is **bold**
 
 This is *italic*
 
-- React
-- TypeScript
-- AI
+## React Example
 
 \`\`\`tsx
-function hello() {
-  console.log("Hello World");
+function App() {
+  return <h1>Hello World</h1>;
 }
+\`\`\`
+
+## Python Example
+
+\`\`\`python
+def greet():
+    print("Hello")
 \`\`\`
 `,
       };
 
       addMessageToActiveChat(aiMessage);
+
+      setIsTyping(false);
+    }, 1000);
+  };
+  const handleRegenerateMessage = (): void => {
+    const activeChatMessages = activeChat?.messages ?? [];
+
+    const lastUserMessage = [...activeChatMessages]
+      .reverse()
+      .find((message) => message.role === "user");
+
+    if (!lastUserMessage) {
+      return;
+    }
+
+    const messagesWithoutLastAssistant = [...activeChatMessages];
+
+    if (messagesWithoutLastAssistant.at(-1)?.role === "assistant") {
+      messagesWithoutLastAssistant.pop();
+    }
+
+    setChats((prevChats) =>
+      prevChats.map((chat) => {
+        if (chat.id !== activeChatId) {
+          return chat;
+        }
+
+        return {
+          ...chat,
+          messages: messagesWithoutLastAssistant,
+        };
+      }),
+    );
+
+    setIsTyping(true);
+
+    setTimeout(() => {
+      const regeneratedMessage: Message = {
+        id: crypto.randomUUID(),
+        role: "assistant",
+        content: `Regenerated response for:
+
+"${lastUserMessage.content}"`,
+      };
+
+      addMessageToActiveChat(regeneratedMessage);
 
       setIsTyping(false);
     }, 1000);
@@ -142,6 +194,7 @@ function hello() {
     isTyping,
     searchQuery,
     handleSendMessage,
+    handleRegenerateMessage,
     handleNewChat,
     handleSelectChat,
     handleDeleteChat,

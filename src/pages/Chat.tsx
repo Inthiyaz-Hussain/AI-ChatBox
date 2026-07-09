@@ -13,6 +13,7 @@ export default function Chat(): React.JSX.Element {
     isTyping,
     searchQuery,
     handleSendMessage,
+    handleRegenerateMessage,
     handleNewChat,
     handleSelectChat,
     handleDeleteChat,
@@ -36,7 +37,11 @@ export default function Chat(): React.JSX.Element {
       <div className="flex flex-1 flex-col bg-gray-100">
         <ChatHeader />
 
-        <ChatWindow messages={activeChat?.messages ?? []} isTyping={isTyping} />
+        <ChatWindow
+          messages={activeChat?.messages ?? []}
+          isTyping={isTyping}
+          onRegenerate={handleRegenerateMessage}
+        />
 
         <PromptInput onSend={handleSendMessage} />
       </div>

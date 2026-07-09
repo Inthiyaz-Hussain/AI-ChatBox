@@ -7,9 +7,14 @@ import { useEffect, useRef } from "react";
 type ChatWindowProps = {
   messages: Message[];
   isTyping: boolean;
+  onRegenerate: () => void;
 };
 
-export default function ChatWindow({ messages, isTyping }: ChatWindowProps) {
+export default function ChatWindow({
+  messages,
+  isTyping,
+  onRegenerate,
+}: ChatWindowProps) {
   const bottomRef = useRef<HTMLDivElement | null>(null);
 
   useEffect(() => {
@@ -29,6 +34,7 @@ export default function ChatWindow({ messages, isTyping }: ChatWindowProps) {
               key={message.id}
               role={message.role}
               content={message.content}
+              onRegenerate={onRegenerate}
             />
           ))}
           {isTyping && <TypingIndicator />}

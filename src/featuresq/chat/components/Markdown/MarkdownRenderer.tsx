@@ -1,8 +1,11 @@
+import React from "react";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
+import rehypeHighlight from "rehype-highlight";
 
-import { Prism as SyntaxHighlighter } from "react-syntax-highlighter";
-import { oneDark } from "react-syntax-highlighter/dist/esm/styles/prism";
+import "highlight.js/styles/github-dark.css";
+
+import CodeBlock from "./CodeBlock";
 
 type MarkdownRendererProps = {
   content: string;
@@ -14,27 +17,27 @@ export default function MarkdownRenderer({
   return (
     <ReactMarkdown
       remarkPlugins={[remarkGfm]}
+      rehypePlugins={[rehypeHighlight]}
       components={{
-        code({ inline, className, children, ...props }) {
-          const match = /language-(\w+)/.exec(className || "");
+        pre({ children }) {
+          const child = React.Children.only(children) as React.ReactElement<{
+            className?: string;
+            children?: React.ReactNode;
+          }>;
 
-          if (!inline && match) {
-            return (
-              <SyntaxHighlighter
-                style={oneDark}
-                language={match[1]}
-                PreTag="div"
-                {...props}
-              >
-                {String(children).replace(/\n$/, "")}
-              </SyntaxHighlighter>
-            );
-          }
+          const className = child.props.className ?? "";
+
+          const language = className.replace("language-", "") || "text";
+
+          const code =
+            typeof child.props.children === "string"
+              ? child.props.children
+              : String(child.props.children ?? "");
 
           return (
-            <code className={className} {...props}>
+            <CodeBlock language={language} code={code.trimEnd()}>
               {children}
-            </code>
+            </CodeBlock>
           );
         },
       }}

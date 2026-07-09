@@ -1,10 +1,18 @@
 import MarkdownRenderer from "./Markdown/MarkdownRenderer";
+import MessageActions from "./MessageActions/MessageActions";
+import CopyMessageButton from "./MessageActions/CopyMessageButton";
+import RegenerateButton from "./MessageActions/RegenerateButton";
+
 type MessageBubbleProps = {
   role: "user" | "assistant";
   content: string;
+  onRegenerate: () => void;
 };
-
-export default function MessageBubble({ role, content }: MessageBubbleProps) {
+export default function MessageBubble({
+  role,
+  content,
+  onRegenerate,
+}: MessageBubbleProps): React.JSX.Element {
   const isUser = role === "user";
 
   return (
@@ -17,6 +25,13 @@ export default function MessageBubble({ role, content }: MessageBubbleProps) {
         }`}
       >
         <MarkdownRenderer content={content} />
+
+        {role === "assistant" && (
+          <MessageActions>
+            <CopyMessageButton message={content} />
+            <RegenerateButton onRegenerate={onRegenerate} />
+          </MessageActions>
+        )}
       </div>
     </div>
   );
