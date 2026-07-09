@@ -1,17 +1,72 @@
-import { useEffect, useState } from "react";
-import { useChatStore } from "../store/chatStore";
-
-import { dummyChats } from "../data/dummyChats";
-
+import { useEffect, useState, useCallback } from "react";
 import {
-  loadChats,
-  saveChats,
-  loadActiveChatId,
-  saveActiveChatId,
-} from "../utils/chatStorage";
+  getGeminiResponse,
+  clearGeminiChatHistory,
+} from "../services/geminiService";
 
-import type { Chat } from "../types/chat";
-import type { Message } from "../types/message";
+export interface Message {
+  id: string;
+  role: "user" | "assistant";
+  content: string;
+}
+
+export interface Chat {
+  id: string;
+  title: string;
+  messages: Message[];
+}
+
+// Dummy data for initial load if no chats are stored
+const dummyChats: Chat[] = [
+  {
+    id: "1",
+    title: "Welcome Chat",
+    messages: [
+      {
+        id: "1",
+        role: "assistant",
+        content: "Hello! How can I help you today?",
+      },
+    ],
+  },
+];
+
+// Utility functions for local storage
+const loadChats = (): Chat[] | null => {
+  try {
+    const serializedChats = localStorage.getItem("chats");
+    return serializedChats ? JSON.parse(serializedChats) : null;
+  } catch (error) {
+    console.error("Error loading chats from local storage:", error);
+    return null;
+  }
+};
+
+const saveChats = (chats: Chat[]): void => {
+  try {
+    const serializedChats = JSON.stringify(chats);
+    localStorage.setItem("chats", serializedChats);
+  } catch (error) {
+    console.error("Error saving chats to local storage:", error);
+  }
+};
+
+const loadActiveChatId = (): string | null => {
+  try {
+    return localStorage.getItem("activeChatId");
+  } catch (error) {
+    console.error("Error loading active chat ID from local storage:", error);
+    return null;
+  }
+};
+
+const saveActiveChatId = (chatId: string): void => {
+  try {
+    localStorage.setItem("activeChatId", chatId);
+  } catch (error) {
+    console.error("Error saving active chat ID to local storage:", error);
+  }
+};
 
 export default function useChat() {
   const initialChats = loadChats() ?? dummyChats;
@@ -38,21 +93,23 @@ export default function useChat() {
 
   const activeChat = chats.find((chat) => chat.id === activeChatId);
 
-  const addMessageToActiveChat = (message: Message): void => {
-    setChats((prevChats) =>
-      prevChats.map((chat) => {
-        if (chat.id !== activeChatId) {
-          return chat;
-        }
+  const addMessageToActiveChat = useCallback(
+    (message: Message): void => {
+      setChats((prevChats) =>
+        prevChats.map((chat) => {
+          if (chat.id !== activeChatId) {
+            return chat;
+          }
 
-        return {
-          ...chat,
-          messages: [...chat.messages, message],
-        };
-      }),
-    );
-  };
-
+          return {
+            ...chat,
+            messages: [...chat.messages, message],
+          };
+        }),
+      );
+    },
+    [activeChatId],
+  );
   const handleSendMessage = (message: string): void => {
     const userMessage: Message = {
       id: crypto.randomUUID(),
