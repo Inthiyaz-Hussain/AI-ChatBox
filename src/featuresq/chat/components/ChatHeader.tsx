@@ -34,12 +34,16 @@ export default function ChatHeader({
       <div className="flex items-center gap-2">
         <button
           onClick={toggleTheme}
-          className="rounded-lg p-2 hover:bg-gray-200 dark:hover:bg-gray-800"
+          className="rounded-lg p-2 text-gray-700 hover:bg-gray-200 dark:text-white dark:hover:bg-gray-800"
         >
-          {theme === "dark" ? <Sun size={20} /> : <Moon size={20} />}
+          {theme === "dark" ? (
+            <Sun className="text-yellow-400" size={20} />
+          ) : (
+            <Moon className="text-gray-900 dark:text-white" size={20} />
+          )}
         </button>
 
-        <button className="rounded-lg p-2 hover:bg-gray-200 dark:hover:bg-gray-800">
+        <button className="rounded-lg p-2 text-gray-700 hover:bg-gray-200 dark:text-white dark:hover:bg-gray-800">
           <MoreVertical size={20} />
         </button>
       </div>

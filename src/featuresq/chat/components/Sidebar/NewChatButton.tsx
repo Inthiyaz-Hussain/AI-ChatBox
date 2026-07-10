@@ -11,7 +11,7 @@ export default function NewChatButton({
     <div className="p-4">
       <button
         onClick={onNewChat}
-        className="flex w-full items-center justify-center gap-2 rounded-lg bg-blue-600 px-4 py-3 font-medium text-white transition hover:bg-blue-700"
+        className="flex w-full items-center justify-center gap-2 rounded-lg bg-blue-600 px-4 py-3 text-white transition hover:bg-blue-700"
       >
         <MessageSquarePlus size={20} />
         New Chat

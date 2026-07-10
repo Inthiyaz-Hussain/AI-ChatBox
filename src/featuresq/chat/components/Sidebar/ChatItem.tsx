@@ -37,7 +37,9 @@ export default function ChatItem({
   return (
     <div
       className={`group mb-2 flex items-center justify-between rounded-lg transition ${
-        isActive ? "bg-blue-100" : "hover:bg-gray-100"
+        isActive
+          ? "dark:bg-gray-800 dark:text-white"
+          : "dark:text-gray-300 dark:hover:bg-gray-800"
       }`}
     >
       {isEditing ? (
