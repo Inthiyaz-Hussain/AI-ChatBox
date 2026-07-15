@@ -1,9 +1,5 @@
-import React from "react";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
-import rehypeHighlight from "rehype-highlight";
-
-import "highlight.js/styles/github-dark.css";
 
 import CodeBlock from "./CodeBlock";
 
@@ -17,27 +13,25 @@ export default function MarkdownRenderer({
   return (
     <ReactMarkdown
       remarkPlugins={[remarkGfm]}
-      rehypePlugins={[rehypeHighlight]}
       components={{
-        pre({ children }) {
-          const child = React.Children.only(children) as React.ReactElement<{
-            className?: string;
-            children?: React.ReactNode;
-          }>;
+        code(props) {
+          const { children, className } = props;
 
-          const className = child.props.className ?? "";
+          const match = /language-(\w+)/.exec(className || "");
 
-          const language = className.replace("language-", "") || "text";
-
-          const code =
-            typeof child.props.children === "string"
-              ? child.props.children
-              : String(child.props.children ?? "");
+          if (match) {
+            return (
+              <CodeBlock
+                language={match[1]}
+                value={String(children).replace(/\n$/, "")}
+              />
+            );
+          }
 
           return (
-            <CodeBlock language={language} code={code.trimEnd()}>
+            <code className="rounded bg-gray-200 px-1 py-0.5 font-mono text-sm dark:bg-gray-700 dark:text-white">
               {children}
-            </CodeBlock>
+            </code>
           );
         },
       }}

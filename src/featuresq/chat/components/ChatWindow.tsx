@@ -31,6 +31,7 @@ export default function ChatWindow({
         <div className="mx-auto flex max-w-4xl flex-col gap-6">
           {messages.map((message) => (
             <MessageBubble
+              key={message.id}
               role={message.role}
               content={message.content}
               onRegenerate={

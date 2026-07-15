@@ -3,6 +3,7 @@ import {
   getGeminiResponse,
   clearGeminiChatHistory,
 } from "../services/geminiService";
+import toast from "react-hot-toast";
 
 export interface Message {
   id: string;
@@ -113,7 +114,12 @@ export default function useChat() {
   );
 
   const handleSendMessage = async (message: string): Promise<void> => {
-    if (isLoading || !message.trim()) {
+    if (isLoading) {
+      return;
+    }
+
+    if (!message.trim()) {
+      toast.error("Please enter a message.");
       return;
     }
 
@@ -124,7 +130,18 @@ export default function useChat() {
     };
 
     addMessageToActiveChat(userMessage);
+    const currentChat = chats.find((chat) => chat.id === activeChatId);
 
+    if (
+      currentChat &&
+      currentChat.title === "New Chat" &&
+      currentChat.messages.length === 0
+    ) {
+      const title =
+        message.length > 35 ? message.substring(0, 35) + "..." : message;
+
+      handleRenameChat(activeChatId, title);
+    }
     setIsTyping(true);
     setIsLoading(true);
 
@@ -174,7 +191,7 @@ export default function useChat() {
         error instanceof Error
           ? error.message
           : "Something went wrong. Please try again.";
-
+toast.error(errorMessage);
       setChats((prevChats) =>
         prevChats.map((chat) => {
           if (chat.id !== activeChatId) {
@@ -301,12 +318,14 @@ export default function useChat() {
       }
 
       if (!streamedText.trim()) {
+        toast.error("AI returned an empty response.");
         throw new Error("AI returned an empty response.");
+        
       }
     } catch (error: unknown) {
       const errorMessage =
         error instanceof Error ? error.message : "Something went wrong.";
-
+toast.error(errorMessage);
       setChats((prevChats) =>
         prevChats.map((chat) => {
           if (chat.id !== activeChatId) {
@@ -342,6 +361,7 @@ export default function useChat() {
     setChats((prevChats) => [...prevChats, newChat]);
     clearGeminiChatHistory(newChat.id);
     setActiveChatId(newChat.id);
+    toast.success("New chat created");
   };
 
   const handleSelectChat = (chatId: string): void => {
@@ -356,6 +376,7 @@ export default function useChat() {
     const updatedChats = chats.filter((chat) => chat.id !== chatId);
     clearGeminiChatHistory(chatId);
     setChats(updatedChats);
+    toast.success("Chat deleted");
 
     if (activeChatId === chatId) {
       setActiveChatId(updatedChats[0].id);
@@ -375,6 +396,7 @@ export default function useChat() {
         };
       }),
     );
+    toast.success("Chat renamed");
   };
 
   return {

@@ -1,5 +1,6 @@
 import { Check, Copy } from "lucide-react";
 import { useState } from "react";
+import toast from "react-hot-toast";
 
 type CopyMessageButtonProps = {
   message: string;
@@ -13,8 +14,9 @@ export default function CopyMessageButton({
   const handleCopy = async () => {
     await navigator.clipboard.writeText(message);
 
-    setCopied(true);
+    toast.success("Message copied");
 
+    setCopied(true);
     setTimeout(() => {
       setCopied(false);
     }, 2000);

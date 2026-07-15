@@ -1,57 +1,53 @@
-import { useState } from "react";
 import { Check, Copy } from "lucide-react";
+import { useState } from "react";
+import { Prism as SyntaxHighlighter } from "react-syntax-highlighter";
+import { oneDark } from "react-syntax-highlighter/dist/esm/styles/prism";
 
-type CodeBlockProps = {
-  language: string;
-  code: string;
-  children: React.ReactNode;
+type Props = {
+  language?: string;
+  value: string;
 };
 
 export default function CodeBlock({
-  language,
-  code,
-  children,
-}: CodeBlockProps): React.JSX.Element {
+  language = "text",
+  value,
+}: Props): React.JSX.Element {
   const [copied, setCopied] = useState(false);
 
-  const handleCopy = async () => {
-    try {
-      await navigator.clipboard.writeText(code);
+  const copyCode = async () => {
+    await navigator.clipboard.writeText(value);
 
-      setCopied(true);
+    setCopied(true);
 
-      setTimeout(() => {
-        setCopied(false);
-      }, 2000);
-    } catch (error) {
-      console.error("Failed to copy:", error);
-    }
+    setTimeout(() => setCopied(false), 2000);
   };
 
   return (
-    <div className="my-4 overflow-hidden rounded-lg border border-gray-700">
-      <div className="flex items-center justify-between bg-gray-800 px-4 py-2">
-        <span className="text-sm font-medium text-gray-300">{language}</span>
+    <div className="my-4 overflow-hidden rounded-xl border border-gray-700">
+      <div className="flex items-center justify-between bg-gray-900 px-4 py-2 text-sm text-gray-300">
+        <span>{language}</span>
 
         <button
-          onClick={handleCopy}
-          className="flex items-center gap-2 text-sm text-gray-300 transition hover:text-white"
+          onClick={copyCode}
+          className="flex items-center gap-2 rounded-md px-2 py-1 hover:bg-gray-700"
         >
-          {copied ? (
-            <>
-              <Check size={16} />
-              Copied!
-            </>
-          ) : (
-            <>
-              <Copy size={16} />
-              Copy
-            </>
-          )}
+          {copied ? <Check size={15} /> : <Copy size={15} />}
+          {copied ? "Copied" : "Copy"}
         </button>
       </div>
 
-      <div>{children}</div>
+      <SyntaxHighlighter
+        language={language}
+        style={oneDark}
+        customStyle={{
+          margin: 0,
+          padding: "18px",
+          fontSize: "14px",
+          borderRadius: 0,
+        }}
+      >
+        {value}
+      </SyntaxHighlighter>
     </div>
   );
 }
